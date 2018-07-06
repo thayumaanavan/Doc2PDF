@@ -1,15 +1,20 @@
-﻿#############################################
+#############################################
 # Doc2PDF                                   #
 # Created: April 30, 2016                   #
-# Last Modified: June 16, 2016              #
+# Last Modified: July 07, 2018              #
 # Version: 1.0                              #
 # Supported Office: 2010*, 2013, 2016       #
 # Supported PowerShell: 4, 5                #
-# Copyright © 2016 Erick Scott Johnson      #
-# All rights reserved.                      #
+# Created By: Erick Scott Johnson           #
+# Forked/Updated By: Thayumaanavan C R      # 
 #############################################
 #Input
 $Input = $args[0]
+#Thayu - added extra args & prefix
+$xcode = $args[1]
+$appName = $args[2]
+$prefix = $xcode + "_" + $appName
+#
 
 #Define Office Formats
 $Wrd_Array = '*.docx', '*.doc', '*.odt', '*.rtf', '*.txt', '*.wpd'
@@ -164,8 +169,8 @@ If ($ExtChk -eq '')
 {
     $Files = Get-ChildItem -path $Input -include $Off_Array -recurse
     ForEach ($File in $Files) {
-        $Path     = [System.IO.Path]::GetDirectoryName($File)
-        $Filename = [System.IO.Path]::GetFileNameWithoutExtension($File)
+        $Path     = [System.IO.Path]::GetDirectoryName($File)		
+        $Filename = [System.IO.Path]::GetFileNameWithoutExtension($File)		
         $Ext      = [System.IO.Path]::GetExtension($File)
         $PDF      = $Path + '\' + $Filename + '.pdf'
         Wrd-Chk $File $Ext $PDF
@@ -173,6 +178,14 @@ If ($ExtChk -eq '')
         Pow-Chk $File $Ext $PDF
         Pub-Chk $File $Ext $PDF
         Vis-Chk $File $Ext $PDF
+		#Thayu - added rename
+		$newName = $Path + '\' +$prefix + '_' + $Filename + '.pdf'
+		Rename-Item $PDF $newName
+		if(!(Test-Path $prefix)){
+			$folder = New-Item -type directory -name $prefix
+		}		
+		Move-Item $newName -destination $folder.FullName
+		#
     }
 }
 Else
@@ -187,7 +200,20 @@ Else
     Pow-Chk $File $Ext $PDF
     Pub-Chk $File $Ext $PDF
     Vis-Chk $File $Ext $PDF
+	#Thayu - added rename
+	$newName = $Path + '\' +$prefix + ' ' + $Filename + '.pdf'
+	Rename-Item $PDF $newName
+	if(!(Test-Path $prefix)){
+			$folder = New-Item -type directory -name $prefix
+	}	
+	Move-Item $newName -destination $folder.FullName
+	#
 }
+
+#Thayu - zip the files
+$FolderPath = $folder.FullName + '\*'
+$ZipFileName = $prefix + '.zip'
+Compress-Archive -Path $FolderPath -DestinationPath $ZipFileName
 
 #Cleanup
 Remove-Item Function:Wrd-PDF, Function:Wrd-Chk
